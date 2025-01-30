@@ -1,9 +1,12 @@
+import RegistrationUser from "./components/RegistrationUser"
+import UsersList from "./components/UsersList"
 
 function App() {
 
   return (
     <>
-   <div>test assignment</div>
+   <UsersList/>
+   <RegistrationUser/>
     </>
   )
 }
