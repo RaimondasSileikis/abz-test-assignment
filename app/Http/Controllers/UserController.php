@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\IndexUserRequest;
-use App\Http\Requests\ShowUserRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Tinify\Tinify;
 use Tymon\JWTAuth\Facades\JWTAuth;
+
+require_once base_path('vendor/autoload.php');
 
 class UserController extends Controller
 {
@@ -67,27 +72,40 @@ class UserController extends Controller
         ], 200);
     }
 
-
     public function store(StoreUserRequest $request)
     {
 
-        $photoPath = $request->file('photo')->store('photos', 'public');
+        $photo = $request->file('photo');
+
+        Tinify::setKey(env('TINYPNG_API_KEY'));
+
+        $sourceData = file_get_contents($photo->getRealPath());
+        $optimizedImage = \Tinify\fromBuffer($sourceData)->resize([
+            "method" => "cover",
+            "width" => 70,
+            "height" => 70
+        ])->toBuffer();
+
+        $filename =  Str::random(2) . uniqid() . '.jpeg';
+        Storage::disk('public')->put("images/users/{$filename}", $optimizedImage);
+
+        $photoUrl = URL::to(Storage::url("images/users/{$filename}"));
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'position_id' => $request->position_id,
-            'photo' => $photoPath,
+            'photo' => $photoUrl,
         ]);
 
         return response()->json([
             'success' => true,
             'user_id' => $user->id,
             'message' => 'New user successfully registered',
+            'photo' => $photoUrl
         ], 201);
     }
-
 
     public function getToken()
     {
