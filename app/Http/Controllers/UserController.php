@@ -5,22 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Requests\IndexUserRequest;
 use App\Http\Requests\ShowUserRequest;
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
     public function index(IndexUserRequest $request)
     {
-        
+
         $perPage = $request->input('count', 5);
         $page = $request->input('page', 1);
 
         $users = User::orderBy('id', 'asc')
-                    ->paginate($perPage, ['*'], 'page', $page);
+            ->paginate($perPage, ['*'], 'page', $page);
 
         if ($users->isEmpty()) {
             return response()->json([
@@ -39,7 +38,7 @@ class UserController extends Controller
                 'next_url' => $users->nextPageUrl(),
                 'prev_url' => $users->previousPageUrl(),
             ],
-            'users' => $users->items(),
+            'users' => UserResource::collection($users),
         ]);
     }
 
@@ -64,15 +63,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'position' => $user->position,
-                'position_id' => $user->position_id,
-                'photo' => $user->photo,
-            ],
+            'user' => new UserResource($user),
         ], 200);
     }
 
@@ -102,7 +93,17 @@ class UserController extends Controller
     {
 
         $user = User::latest()->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => 'Token Generator',
+                'email' => 'token@generator.com',
+            ]);
+        };
+
         $token = JWTAuth::fromUser($user);
+
+        User::where('email', 'token@generator.com')->delete();
 
         return response()->json([
             'success' => true,
