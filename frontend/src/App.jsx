@@ -1,14 +1,14 @@
-import RegistrationUser from "./components/RegistrationUser"
+import Signup from "./components/Signup"
 import UsersList from "./components/UsersList"
 
 function App() {
 
-  return (
-    <>
-   <UsersList/>
-   <RegistrationUser/>
-    </>
-  )
+    return (
+        <div className="min-h-screen bg-gray-50 p-4">
+            <UsersList />
+            <Signup />
+        </div>
+    )
 }
 
 export default App

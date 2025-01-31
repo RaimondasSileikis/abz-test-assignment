@@ -28,7 +28,18 @@ class IndexUserRequest extends FormRequest
             'page' => 'required|integer|min:1',
         ];
     }
-
+    
+    public function messages()
+    {
+        return [
+            'count.required' => 'The count parameter is required.',
+            'count.integer' => 'The count must be an integer.',
+            'count.min' => 'The count must be at least 1.',
+            'page.required' => 'The page parameter is required.',
+            'page.integer' => 'The page must be an integer.',
+            'page.min' => 'The page must be at least 1.',
+        ];
+    }
 
     protected function failedValidation(Validator $validator)
     {

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Tinify\Tinify;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Validator;
 
 require_once base_path('vendor/autoload.php');
 
@@ -50,10 +51,15 @@ class UserController extends Controller
     public function show($userId)
     {
 
-        if (!is_numeric($userId)) {
+        $validator = Validator::make(['userId' => $userId], [
+            'userId' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'The user id must be an integer',
+                'message' => 'The user with the requested id does not exist',
+                'fails' => $validator->errors()
             ], 400);
         }
 
@@ -75,10 +81,20 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
 
-        $photo = $request->file('photo');
+        $existingUser = User::where('email', $request->email)
+            ->orWhere('phone', $request->phone)
+            ->first();
+
+        if ($existingUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User with this phone or email already exists',
+            ], 409);
+        }
 
         Tinify::setKey(env('TINYPNG_API_KEY'));
 
+        $photo = $request->file('photo');
         $sourceData = file_get_contents($photo->getRealPath());
         $optimizedImage = \Tinify\fromBuffer($sourceData)->resize([
             "method" => "cover",
@@ -103,30 +119,25 @@ class UserController extends Controller
             'success' => true,
             'user_id' => $user->id,
             'message' => 'New user successfully registered',
-            'photo' => $photoUrl
         ], 201);
     }
 
     public function getToken()
     {
+        try {
+            $user = User::latest()->first();
+            $token = JWTAuth::fromUser($user);
 
-        $user = User::latest()->first();
-
-        if (!$user) {
-            $user = User::create([
-                'name' => 'Token Generator',
-                'email' => 'token@generator.com',
+            return response()->json([
+                'success' => true,
+                'token' => $token,
             ]);
-        };
-
-        $token = JWTAuth::fromUser($user);
-
-        User::where('email', 'token@generator.com')->delete();
-
-        return response()->json([
-            'success' => true,
-            'token' => $token,
-            'user' => $user
-        ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

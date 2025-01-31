@@ -6,11 +6,10 @@ export const getToken = async () => {
   try {
     const response = await axios.get(`${API_URL}/token`);
     if (response.data.success) {
-        console.log('API response get tokens', response);
       return response.data.token;
     }
   } catch (error) {
-    console.error("Error fetching token:", error);
+    alert(error.response?.data?.message);
   }
   return null;
 };
@@ -23,10 +22,9 @@ export const createUser = async (token, userData) => {
         "Content-Type": "multipart/form-data",
       },
     });
-    console.log('API response create User', response);
     return response.data;
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error("Error creating user:", error.response?.data);
     throw error;
   }
 };
@@ -34,11 +32,44 @@ export const createUser = async (token, userData) => {
 export const getPositions = async () => {
   try {
     const response = await axios.get(`${API_URL}/positions`);
-    console.log('API response get Positions', response);
     return response.data.positions;
   } catch (error) {
-    console.error("Error fetching positions:", error);
+    console.error("Error fetching positions:", error.response?.data);
     return [];
   }
 };
 
+export const getUsers = async (page = 1, count = 5) => {
+    try {
+      const response = await axios.get(`${API_URL}/users`, {
+        params: { page, count },
+      });
+
+      if (response.data.success) {
+        return {
+          users: response.data.users,
+          pagination: {
+            totalPages: response.data.total_pages,
+            totalUsers: response.data.total_users,
+            nextUrl: response.data.links?.next_url || null,
+            prevUrl: response.data.links?.prev_url || null,
+          },
+        };
+      }
+    } catch (error) {
+      console.error("Failed to get users:", error.response?.data);
+      throw error;
+    }
+  };
+
+  export const getUserById = async (userId) => {
+    try {
+      const response = await axios.get(`${API_URL}/users/${userId}`);
+      if (response.data.success) {
+        return response.data.user;
+      }
+    } catch (error) {
+      console.error("Failed to get user details:", error.response?.data);
+      throw error;
+    }
+  };
