@@ -1,7 +1,5 @@
 import axios from "axios";
 
-
-
 export const getToken = async () => {
   try {
     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/token`);
