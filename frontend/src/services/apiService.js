@@ -37,7 +37,7 @@ export const getPositions = async () => {
   }
 };
 
-export const getUsers = async (page = 1, count = 5) => {
+export const getUsers = async (page = 1, count = 6) => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users`, {
         params: { page, count },

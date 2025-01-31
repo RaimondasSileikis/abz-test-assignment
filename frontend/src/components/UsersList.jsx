@@ -5,8 +5,6 @@ import { getUsers } from "../services/apiService";
 export default function UsersList() {
     const [users, setUsers] = useState([]);
     const [page, setPage] = useState(1);
-    const [count, setCount] = useState(5);
-    const [pagination, setPagination] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [getUsersError, setGetUsersError] = useState(null);
 
@@ -14,9 +12,8 @@ export default function UsersList() {
         const fetchUsers = async () => {
 
             try {
-                const data = await getUsers(page, count);
+                const data = await getUsers(page);
                 setUsers(data.users);
-                setPagination(data.pagination);
             } catch (error) {
                 console.error("Error fetching users:", error.response?.data || 'An unexpected error occurred');
                 if (error.response?.data) {
@@ -28,7 +25,7 @@ export default function UsersList() {
         };
 
         fetchUsers();
-    }, [page, count]);
+    }, [page]);
 
     const handleUserClick = (userId) => {
         setSelectedUserId(userId);
@@ -36,6 +33,10 @@ export default function UsersList() {
 
     const handleCloseModal = () => {
         setSelectedUserId(null);
+    };
+
+    const handleShowMore = () => {
+        setPage((prevPage) => prevPage + 1);
     };
 
     return (
@@ -48,23 +49,6 @@ export default function UsersList() {
                     </div>
                 ))}
             <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8 bg-gray-50">
-                <div className="mb-4 flex gap-2">
-                    <label htmlFor="count" className="font-medium">
-                        Users per page:
-                    </label>
-                    <select
-                        id="count"
-                        value={count}
-                        onChange={(e) => setCount(Number(e.target.value))}
-                        className="border rounded p-1"
-                    >
-                        {[5, 10, 20].map((value) => (
-                            <option key={value} value={value}>
-                                {value}
-                            </option>
-                        ))}
-                    </select>
-                </div>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
                     {users.map((user) => (
                         <div
@@ -95,26 +79,14 @@ export default function UsersList() {
                         </div>
                     ))}
                 </div>
-                <div className="mt-4 flex justify-between items-center">
+                <div className="mt-4 flex justify-center">
                     <button
-                        onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={!pagination.prevUrl}
-                        className={`px-4 py-2 border rounded ${!pagination.prevUrl ? "opacity-50 cursor-not-allowed" : ""}`}
+                        onClick={handleShowMore}
+                        className="px-4 py-2 bg-orange-300 text-white rounded hover:bg-orange-400"
                     >
-                        Previous
-                    </button>
-                    <span className="font-medium">
-                        Page {page} of {pagination.totalPages}
-                    </span>
-                    <button
-                        onClick={() => setPage((prev) => prev + 1)}
-                        disabled={!pagination.nextUrl}
-                        className={`px-4 py-2 border rounded ${!pagination.nextUrl ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                        Next
+                        Show More
                     </button>
                 </div>
-
                 {selectedUserId && <UserById userId={selectedUserId} onClose={handleCloseModal} />}
             </div>
         </>
